@@ -7,25 +7,26 @@ Version: 1.0
 Author: Christopher Finke
 */
 
-add_action( 'wp_loaded', array( 'NotABlog', 'redirects' ), 1 );
-add_action( 'admin_init', array( 'NotABlog', 'admin_menu' ), 99 );
-add_action( 'admin_bar_menu', array( 'NotABlog', 'admin_bar_menu' ), 99 );
+add_action( 'wp_loaded', array( 'NOTABLOG', 'redirects' ), 1 );
+add_action( 'admin_init', array( 'NOTABLOG', 'admin_menu' ), 99 );
+add_action( 'admin_bar_menu', array( 'NOTABLOG', 'admin_bar_menu' ), 99 );
+add_filter( 'all_plugins', array( 'NOTABLOG', 'modify_plugin_description' ) );
 
-class NotABlog {
+class NOTABLOG {
+	public static $default_destination_page = 'wp-admin/';
+
 	/**
 	 * Redirect frontend pages and possibly the default wp-admin page to the plugin's chosen default page.
 	 */
 	public static function redirects() {
 		global $pagenow;
 
-		$default_destination_page = 'wp-admin/';
-
 		if (
 			! is_admin() &&
 			! is_login() &&
 			! ( defined('REST_REQUEST') && REST_REQUEST )
 		) {
-			wp_redirect( site_url( apply_filters( 'not_a_blog_default_page', $default_destination_page ) ) );
+			wp_redirect( site_url( apply_filters( 'not_a_blog_default_page', NOTABLOG::$default_destination_page ) ) );
 			exit();
 		}
 
@@ -33,8 +34,8 @@ class NotABlog {
 		// ...but only if a plugin has defined a destination page; otherwise, we'll be caught in a loop.
 		if ( is_admin() ) {
 			if ( 'index.php' === $pagenow ) {
-				if ( apply_filters( 'not_a_blog_default_page', $default_destination_page ) !== $default_destination_page ) {
-					wp_redirect( site_url( apply_filters( 'not_a_blog_default_page', $default_destination_page ) ) );
+				if ( apply_filters( 'not_a_blog_default_page', NOTABLOG::$default_destination_page ) !== NOTABLOG::$default_destination_page ) {
+					wp_redirect( site_url( apply_filters( 'not_a_blog_default_page', NOTABLOG::$default_destination_page ) ) );
 					exit();
 				}
 			}
@@ -69,5 +70,18 @@ class NotABlog {
 		$admin_bar->remove_node( 'new-post' );
 		$admin_bar->remove_node( 'new-page' );
 		$admin_bar->remove_node( 'new-media' );
+	}
+
+	public static function modify_plugin_description( $all_plugins ) {
+		if ( isset( $all_plugins['not-a-blog/not-a-blog.php'] ) ) {
+			$all_plugins['not-a-blog/not-a-blog.php']['Description'] .= '  ' .
+				sprintf(
+					__( 'The default landing page, as determined by the %1$s filter, is %2$s.', 'notablog' ),
+					'<code>not_a_blog_default_page</code>',
+					'<code>' . esc_html( apply_filters( 'not_a_blog_default_page', NOTABLOG::$default_destination_page ) ) . '</code>'
+				);
+		}
+
+		return $all_plugins;
 	}
 }
