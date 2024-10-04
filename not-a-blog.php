@@ -21,23 +21,24 @@ class NOTABLOG {
 	public static function redirects() {
 		global $pagenow;
 
+		if ( is_login() ) {
+			return;
+		}
+
 		if (
 			! is_admin() &&
-			! is_login() &&
 			! ( defined('REST_REQUEST') && REST_REQUEST )
 		) {
-			wp_redirect( site_url( apply_filters( 'not_a_blog_default_page', NOTABLOG::$default_destination_page ) ) );
+			wp_redirect( site_url( 'wp-admin/' ) );
 			exit();
 		}
 
 		// If is_admin() and the user is on the dashboard, redirect to the main plugin page.
 		// ...but only if a plugin has defined a destination page; otherwise, we'll be caught in a loop.
-		if ( is_admin() ) {
-			if ( 'index.php' === $pagenow ) {
-				if ( apply_filters( 'not_a_blog_default_page', NOTABLOG::$default_destination_page ) !== NOTABLOG::$default_destination_page ) {
-					wp_redirect( site_url( apply_filters( 'not_a_blog_default_page', NOTABLOG::$default_destination_page ) ) );
-					exit();
-				}
+		if ( is_admin() && is_user_logged_in() && 'index.php' === $pagenow ) {
+			if ( apply_filters( 'not_a_blog_default_page', NOTABLOG::$default_destination_page ) !== NOTABLOG::$default_destination_page ) {
+				wp_redirect( site_url( apply_filters( 'not_a_blog_default_page', NOTABLOG::$default_destination_page ) ) );
+				exit();
 			}
 		}
 	}
