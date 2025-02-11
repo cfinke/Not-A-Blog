@@ -25,6 +25,10 @@ class NOTABLOG {
 			return;
 		}
 
+		if ( 'wp-cron.php' == $pagenow ) {
+			return;
+		}
+
 		if (
 			! is_admin() &&
 			! ( defined('REST_REQUEST') && REST_REQUEST )
